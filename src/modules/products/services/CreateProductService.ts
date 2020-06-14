@@ -4,19 +4,33 @@ import AppError from '@shared/errors/AppError';
 
 import Product from '../infra/typeorm/entities/Product';
 import IProductsRepository from '../repositories/IProductsRepository';
-
-interface IRequest {
-  name: string;
-  price: number;
-  quantity: number;
-}
+import ICreateProductDTO from '../dtos/ICreateProductDTO';
 
 @injectable()
 class CreateProductService {
-  constructor(private productsRepository: IProductsRepository) {}
+  constructor(
+    @inject('ProductsRepository')
+    private productsRepository: IProductsRepository,
+  ) {}
 
-  public async execute({ name, price, quantity }: IRequest): Promise<Product> {
-    // TODO
+  public async execute({
+    name,
+    price,
+    quantity,
+  }: ICreateProductDTO): Promise<Product> {
+    const findProduct = await this.productsRepository.findByName(name);
+
+    if (findProduct) {
+      throw new AppError('Product already registered');
+    }
+
+    const product = await this.productsRepository.create({
+      name,
+      price,
+      quantity,
+    });
+
+    return product;
   }
 }
 
